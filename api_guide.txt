@@ -1,0 +1,100 @@
+PORTFOLIO API - POSTMAN TESTING GUIDE (PATH-BASED)
+================================================
+
+Base URL: http://localhost/my_backend/
+
+1. AUTHENTICATION & USERS (auth.php)
+------------------------------------
+
+Action: Login
+Method: POST
+URL: auth.php/login
+Body Type: JSON
+Fields: username, password
+
+Action: Create User
+Method: POST
+URL: auth.php/post
+Body Type: Form-Data
+Fields: full_name, username, email, password, profile_picture (file)
+
+Action: List All Users
+Method: GET
+URL: auth.php/get
+
+Action: Get Single User
+Method: GET
+URL: auth.php/get/1
+
+Action: Update User
+Method: POST
+URL: auth.php/put/1
+Body Type: Form-Data
+Fields: full_name, email, password, profile_picture (file)
+
+Action: Delete User
+Method: POST
+URL: auth.php/delete/1
+Body Type: Form-Data or JSON
+
+
+2. PROJECTS (projects.php)
+--------------------------
+
+Action: Create Project
+Method: POST
+URL: projects.php/post
+Body Type: Form-Data
+Fields: project_name, display_order, project_url, short_description, description, technologies, featured_image (file), gallery_images[] (multiple files)
+
+Action: List All Projects
+Method: GET
+URL: projects.php/get
+
+Action: List Active Projects
+Method: GET
+URL: projects.php/get/active
+
+Action: Get Single Project
+Method: GET
+URL: projects.php/get/1
+
+Action: Update Project
+Method: POST
+URL: projects.php/put/1
+Body Type: Form-Data
+Fields: project_name, featured_image (file), gallery_images[] (file)
+
+Action: Delete Project
+Method: POST
+URL: projects.php/delete/1
+
+
+3. CONTACT (contact.php)
+------------------------
+
+Action: Send Message
+Method: POST
+URL: contact.php/post
+Body Type: JSON
+Fields: name, email, message
+
+Action: List All Messages
+Method: GET
+URL: contact.php/get
+
+
+SAMPLE CREDENTIALS
+------------------
+Username: ubaiseibrahim
+Password: ubasie@eache
+
+
+IMPORTANT NOTES
+---------------
+1. Use "form-data" in Postman for any request that includes images.
+2. Use "raw" -> "JSON" in Postman for Login and Contact requests.
+3. Default uploads folders:
+   - uploads/projects/featured/
+   - uploads/projects/gallery/
+   - uploads/profiles/
