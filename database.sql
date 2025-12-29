@@ -56,5 +56,13 @@ INSERT INTO users (full_name, username, email, password, profile_picture) VALUES
 ('Ubaise Ibrahim', 'ubaiseibrahim', 'ubaise@example.com', '$2y$10$JpKf58xsaQam9/XypPaqcuwx2JMyYYfE4UK7iYrasQOE8TtIDRWfC', 'uploads/profiles/default.jpg');
 
 
+-- Resume Table (Singleton)
+CREATE TABLE IF NOT EXISTS resume (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    file_path VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
 
 

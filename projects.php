@@ -181,22 +181,39 @@ function handleGetById($db, $id) {
 function handleUpdate($db, $uploader, $id) {
     $data = array_merge(json_decode(file_get_contents("php://input"), true) ?: [], $_POST);
     $stmt = $db->prepare("SELECT featured_image, gallery_images FROM projects WHERE id = ?");
-
     $stmt->execute([$id]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-
     if (!$existing) {
         http_response_code(404);
         echo json_encode(array("message" => "Not found."));
         return;
     }
-
-    $f_img = $uploader->uploadSingle($_FILES['featured_image'] ?? null, "featured") ?: $existing['featured_image'];
-    $g_imgs = json_decode($existing['gallery_images'], true) ?: [];
+    // FEATURED IMAGE LOGIC
+    // 1. If new file uploaded -> use it (and maybe delete old?)
+    // 2. If 'retain_featured' flag is sent -> keep existing
+    // 3. Otherwise -> it was deleted by user -> set to null
+    
+    $f_img = null;
+    $new_f_img = $uploader->uploadSingle($_FILES['featured_image'] ?? null, "featured");
+    
+    if ($new_f_img && !isset($new_f_img['error'])) {
+        $f_img = $new_f_img;
+        // Optional: unlink($existing['featured_image']) if you want to clean up
+    } elseif (isset($_POST['retain_featured']) && $_POST['retain_featured'] == '1') {
+        $f_img = $existing['featured_image'];
+    } else {
+        $f_img = null; // Removed
+    }
+    // GALLERY IMAGES LOGIC
+    // 1. Get 'existing_gallery' array from POST (trusted list of images to keep)
+    // 2. Upload new files
+    // 3. Merge them
+    $existing_gallery_kept = $_POST['existing_gallery'] ?? []; 
+    // Ensure it's an array
+    if (!is_array($existing_gallery_kept)) $existing_gallery_kept = [];
     $new_g_imgs = $uploader->uploadMultiple($_FILES['gallery_images'] ?? null, "gallery");
-    $g_imgs = array_merge($g_imgs, $new_g_imgs);
-
-
+    
+    $final_gallery_imgs = array_merge($existing_gallery_kept, $new_g_imgs);
     $query = "UPDATE projects SET project_name=COALESCE(:name, project_name), 
               display_order=COALESCE(:order, display_order), project_url=COALESCE(:url, project_url), 
               short_description=COALESCE(:short, short_description), description=COALESCE(:desc, description), 
@@ -207,7 +224,6 @@ function handleUpdate($db, $uploader, $id) {
     $stmt = $db->prepare($query);
     $stmt->execute([
         ":id" => $id,
-
         ":name" => $data['project_name'] ?? null,
         ":order" => isset($data['display_order']) ? (int)$data['display_order'] : null,
         ":url" => $data['project_url'] ?? null,
@@ -215,18 +231,34 @@ function handleUpdate($db, $uploader, $id) {
         ":desc" => $data['description'] ?? null,
         ":tech" => $data['technologies'] ?? null,
         ":fimg" => $f_img,
-        ":gimg" => json_encode($g_imgs),
+        ":gimg" => json_encode($final_gallery_imgs), // Use the final merged array
         ":status" => $data['status'] ?? null,
         ":start" => $data['start_date'] ?? null,
         ":end" => $data['end_date'] ?? null
     ]);
-
     echo json_encode(array("message" => "Project updated."));
 }
 
 function handleDelete($db, $id) {
+    $stmt = $db->prepare("SELECT featured_image, gallery_images FROM projects WHERE id = ?");
+    $stmt->execute([$id]);
+    $project = $stmt->fetch(PDO::FETCH_ASSOC);
+
     $stmt = $db->prepare("DELETE FROM projects WHERE id = ?");
     if ($stmt->execute([$id])) {
+        if ($project) {
+            if (!empty($project['featured_image']) && file_exists($project['featured_image'])) {
+                unlink($project['featured_image']);
+            }
+            $gallery = json_decode($project['gallery_images'], true);
+            if (is_array($gallery)) {
+                foreach ($gallery as $img) {
+                    if (!empty($img) && file_exists($img)) {
+                        unlink($img);
+                    }
+                }
+            }
+        }
         echo json_encode(array("message" => "Project deleted."));
     } else {
         http_response_code(500);

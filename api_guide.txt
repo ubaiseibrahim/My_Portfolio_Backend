@@ -83,6 +83,25 @@ Action: List All Messages
 Method: GET
 URL: contact.php/get
 
+Action: Delete Message
+Method: DELETE
+URL: contact.php/delete/1
+
+
+4. RESUME (resume.php)
+----------------------
+
+Action: Upload/Update Resume
+Method: POST
+URL: resume.php/post
+Body Type: Form-Data
+Fields: resume (file - pdf, doc, docx only)
+Note: This replaces any existing resume.
+
+Action: Get Resume
+Method: GET
+URL: resume.php/get
+
 
 SAMPLE CREDENTIALS
 ------------------

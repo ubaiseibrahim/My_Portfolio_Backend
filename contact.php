@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
@@ -25,6 +25,7 @@ if (!$db) {
 $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : '';
 $parts = explode('/', $path);
 $action = $parts[0] ?? '';
+$id = $parts[1] ?? null;
 
 switch ($action) {
     case 'post':
@@ -32,6 +33,14 @@ switch ($action) {
         break;
     case 'get':
         handleGetAll($db);
+        break;
+    case 'delete':
+        if ($id) {
+            handleDelete($db, $id);
+        } else {
+            http_response_code(400);
+            echo json_encode(array("message" => "ID required for delete."));
+        }
         break;
     default:
         http_response_code(404);
@@ -77,5 +86,15 @@ function handleGetAll($db) {
     $stmt = $db->prepare("SELECT * FROM contact_messages ORDER BY created_at DESC");
     $stmt->execute();
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+}
+
+function handleDelete($db, $id) {
+    $stmt = $db->prepare("DELETE FROM contact_messages WHERE id = ?");
+    if ($stmt->execute([$id])) {
+        echo json_encode(array("message" => "Message deleted."));
+    } else {
+        http_response_code(500);
+        echo json_encode(array("message" => "Delete failed."));
+    }
 }
 ?>

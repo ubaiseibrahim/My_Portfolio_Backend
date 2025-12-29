@@ -209,8 +209,15 @@ function handleUpdateUser($db, $uploader, $id) {
 }
 
 function handleDeleteUser($db, $id) {
+    $stmt = $db->prepare("SELECT profile_picture FROM users WHERE id = ?");
+    $stmt->execute([$id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
     $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
     if ($stmt->execute([$id])) {
+        if ($user && !empty($user['profile_picture']) && file_exists($user['profile_picture'])) {
+            unlink($user['profile_picture']);
+        }
         echo json_encode(array("message" => "User deleted."));
     } else {
         http_response_code(500);
